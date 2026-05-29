@@ -1,0 +1,1563 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UCTenis – Reserva de Canchas</title>
+  <link rel="icon" href="logo_uctenis_v03.png" type="image/png">
+  <link rel="manifest" href="manifest.json">
+  <meta property="og:title" content="Reserva de Canchas UCTenis"/>
+  <meta property="og:description" content="Sistema de reservas y ranking de canchas de tenis UCT."/>
+  <meta property="og:image" content="https://uctenis.github.io/reservas-canchas/logo_uctenis_v03.png"/>
+  <meta name="theme-color" content="#0f172a"/>
+  <link rel="stylesheet" href="style.css?v=20260528_v10">
+  <style>
+    /* ── Actions Hero Grid (Top Priority) ── */
+    .actions-hero-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+    .hero-card {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.7) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 20px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .hero-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(198, 211, 0, 0.25);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2), 0 0 15px rgba(198, 211, 0, 0.05);
+    }
+    .hero-card::before {
+      content: ''; position: absolute; top: -30%; right: -20%;
+      width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(198,211,0,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-card-content {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+    .hero-card-icon {
+      width: 46px; height: 46px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(198, 211, 0, 0.06);
+      border-radius: 12px;
+      border: 1px solid rgba(198, 211, 0, 0.15);
+      color: var(--accent-tennis);
+      flex-shrink: 0;
+      box-shadow: 0 0 15px rgba(198, 211, 0, 0.08);
+    }
+    .hero-card-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      margin-bottom: 4px;
+      color: #fff;
+    }
+    .hero-card-desc {
+      font-size: 0.84rem;
+      color: var(--text-secondary);
+      line-height: 1.35;
+      margin: 0;
+    }
+    .hero-card-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 9px 20px;
+      border-radius: 50px; font-weight: 700; font-size: 0.84rem;
+      text-decoration: none;
+      transition: all 0.2s;
+      width: fit-content;
+    }
+    .hero-card-btn-primary {
+      background: var(--accent-tennis); color: #0f172a;
+      box-shadow: 0 4px 12px rgba(198, 211, 0, 0.2);
+    }
+    .hero-card-btn-primary:hover {
+      background: #d4e000; transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(198, 211, 0, 0.3);
+      color: #0f172a;
+    }
+    .hero-card-btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #fff;
+    }
+    .hero-card-btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateY(-1px);
+    }
+
+    /* ── Dashboard Layout (70/30 Split) ── */
+    .dashboard-layout {
+      display: grid;
+      grid-template-columns: 1.95fr 1.05fr;
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+    .dashboard-main {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .dashboard-sidebar {
+      display: flex;
+      flex-direction: column;
+    }
+    .live-dashboard-card {
+      background: var(--bg-card);
+      border: var(--glass-border);
+      border-radius: 20px;
+      padding: 16px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .compact-match-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    
+    /* ── Live Badge ── */
+    .live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 6px;
+      background: rgba(248,113,113,0.12);
+      border: 1px solid rgba(248,113,113,0.25);
+      border-radius: 20px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: #f87171;
+      animation: pulse-live 2s ease-in-out infinite;
+      margin-left: 8px;
+    }
+    @keyframes pulse-live {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
+    /* ── Compact Match Card Design ── */
+    .match-card {
+      background: rgba(255, 255, 255, 0.015);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: 14px;
+      padding: 10px 12px;
+      transition: all 0.25s ease;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .match-card:hover {
+      background: rgba(255, 255, 255, 0.03);
+      border-color: rgba(255, 255, 255, 0.08);
+      transform: translateY(-1px);
+    }
+    .match-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 0.66rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: var(--text-secondary);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      padding-bottom: 5px;
+    }
+    .match-court {
+      font-weight: 600;
+    }
+    .match-date {
+      font-weight: 500;
+    }
+    .match-players-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    .match-player-block {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      text-align: center;
+      max-width: 43%;
+    }
+    .match-player-avatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      background-color: #1e293b;
+      transition: all 0.2s ease;
+    }
+    .match-card:hover .match-player-avatar {
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+    .match-player-block.is-winner .match-player-avatar {
+      border-color: var(--accent-tennis);
+      box-shadow: 0 0 10px rgba(198, 211, 0, 0.35);
+    }
+    .match-player-name {
+      font-size: 0.74rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 100%;
+    }
+    .match-player-block.is-winner .match-player-name {
+      color: var(--accent-tennis);
+    }
+    .match-player-block.is-loser .match-player-name {
+      color: var(--text-secondary);
+      font-weight: 400;
+    }
+    .match-player-block.is-loser .match-player-avatar {
+      opacity: 0.6;
+    }
+    .match-middle {
+      width: 50px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+    .match-vs-badge {
+      font-size: 0.64rem;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 8px;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+    .match-vs-badge.status-pendiente {
+      background: rgba(251, 191, 36, 0.08);
+      color: #fbbf24;
+      border: 1px solid rgba(251, 191, 36, 0.18);
+    }
+    .match-vs-badge.status-aceptado {
+      background: rgba(74, 222, 128, 0.08);
+      color: #4ade80;
+      border: 1px solid rgba(74, 222, 128, 0.18);
+    }
+    .match-score-badge {
+      font-size: 0.76rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 6px;
+      padding: 3px 8px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      white-space: nowrap;
+    }
+    .live-empty {
+      text-align: center;
+      padding: 16px 0;
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+    }
+    .live-dashboard-card.is-empty-compact {
+      padding: 12px 16px;
+    }
+    .live-dashboard-card.is-empty-compact .section-title {
+      margin-bottom: 6px !important;
+    }
+    .live-dashboard-card.is-empty-compact .live-badge {
+      display: none;
+    }
+    .live-dashboard-card.is-empty-compact .live-footer {
+      margin-top: 4px !important;
+    }
+    .compact-match-grid.is-empty {
+      display: block;
+    }
+    .compact-match-grid.is-empty .live-empty {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 8px;
+      padding: 2px 0;
+      text-align: left;
+      line-height: 1.2;
+    }
+    .compact-match-grid.is-empty .live-empty svg {
+      width: 14px;
+      height: 14px;
+      margin-bottom: 0 !important;
+      flex-shrink: 0;
+    }
+    .live-footer {
+      margin-top: 10px;
+      text-align: center;
+    }
+    .live-footer a {
+      font-size: 0.78rem;
+      color: var(--accent-tennis);
+      font-weight: 600;
+    }
+    .live-footer a:hover { text-decoration: underline; }
+
+    /* Highlight user's matches */
+    .match-card.is-my-match {
+      border: 1.5px solid var(--accent-tennis) !important;
+      box-shadow: 0 0 10px rgba(198, 211, 0, 0.12);
+    }
+    .match-card.is-friendly {
+      border: 1px solid rgba(99, 102, 241, 0.15) !important;
+      background: rgba(15, 23, 42, 0.4);
+    }
+    .match-card.is-challenge-official {
+      border: 1px solid rgba(245, 158, 11, 0.3) !important;
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%);
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.05);
+    }
+    .match-type-badge {
+      font-size: 0.62rem;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .match-type-badge.is-friendly {
+      background: rgba(99, 102, 241, 0.12);
+      color: #a5b4fc;
+      border: 1px solid rgba(99, 102, 241, 0.25);
+    }
+    .match-type-badge.is-official {
+      background: rgba(245, 158, 11, 0.12);
+      color: #fcd34d;
+      border: 1px solid rgba(245, 158, 11, 0.25);
+    }
+    .my-match-label {
+      position: absolute;
+      top: -8px;
+      right: 10px;
+      background: var(--accent-tennis);
+      color: #000;
+      font-size: 0.58rem;
+      font-weight: 900;
+      padding: 1px 6px;
+      border-radius: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      z-index: 5;
+    }
+
+    /* Chat bubble comments styling */
+    .match-comments-chat {
+      margin-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+      padding-top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      text-align: left;
+    }
+    .chat-bubble {
+      position: relative;
+      max-width: 90%;
+      padding: 6px 10px;
+      border-radius: 10px;
+      font-size: 0.72rem;
+      line-height: 1.25;
+      color: var(--text-primary);
+    }
+    .chat-bubble.retador {
+      align-self: flex-start;
+      background: rgba(59, 130, 246, 0.08);
+      border: 1px solid rgba(59, 130, 246, 0.15);
+      border-bottom-left-radius: 2px;
+    }
+    .chat-bubble.retado {
+      align-self: flex-end;
+      background: rgba(198, 211, 0, 0.05);
+      border: 1px solid rgba(198, 211, 0, 0.15);
+      border-bottom-right-radius: 2px;
+    }
+    .chat-author {
+      display: block;
+      font-size: 0.6rem;
+      font-weight: 800;
+      margin-bottom: 2px;
+      text-transform: uppercase;
+    }
+    .chat-bubble.retador .chat-author {
+      color: #93c5fd;
+    }
+    .chat-bubble.retado .chat-author {
+      color: #e2f100;
+    }
+
+    /* ── Sidebar News List ── */
+    .sidebar-news-card {
+      background: var(--bg-card);
+      border: var(--glass-border);
+      border-radius: 20px;
+      padding: 16px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      height: 100%;
+    }
+    .sidebar-news-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .news-card {
+      background: rgba(255, 255, 255, 0.015);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: 12px;
+      padding: 12px;
+      transition: all 0.2s ease;
+    }
+    .news-card:hover {
+      background: rgba(255, 255, 255, 0.03);
+      border-color: rgba(198, 211, 0, 0.2);
+    }
+    .news-badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.62rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+      letter-spacing: 0.02em;
+    }
+    .badge-torneo {
+      background: rgba(59, 130, 246, 0.12);
+      color: #93c5fd;
+      border: 1px solid rgba(59, 130, 246, 0.22);
+    }
+    .badge-maint {
+      background: rgba(239, 68, 68, 0.12);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.22);
+    }
+    .badge-app {
+      background: rgba(168, 85, 247, 0.12);
+      color: #d8b4fe;
+      border: 1px solid rgba(168, 85, 247, 0.22);
+    }
+    .news-card-title {
+      font-size: 0.88rem;
+      font-weight: 700;
+      line-height: 1.3;
+      margin-bottom: 4px;
+      color: var(--text-primary);
+    }
+    .news-card-body {
+      font-size: 0.78rem;
+      line-height: 1.35;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+    .news-date {
+      font-size: 0.68rem;
+      color: var(--text-secondary);
+      opacity: 0.65;
+    }
+
+    /* ── User pill top-right ── */
+    .user-bar-index { position: absolute; top: 0; right: 0; }
+    .user-pill {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 50px; padding: 6px 14px; font-size: 0.84rem;
+    }
+    .user-avatar-sm {
+      width: 24px; height: 24px; background: var(--accent-tennis); color: #0f172a;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 0.8rem;
+    }
+    .btn-logout-sm { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 0.8rem; padding: 0; }
+    .btn-logout-sm:hover { color: #f87171; }
+
+    /* ── Responsive adjustments ── */
+    @media (max-width: 900px) {
+      .dashboard-layout {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+      .compact-match-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    @media (max-width: 768px) {
+      .actions-hero-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+      .user-bar-index {
+        position: static;
+        margin-bottom: 20px;
+        text-align: center;
+        display: flex;
+        justify-content: center;
+      }
+    }
+
+    /* ── Auth Modal (Home Login) ── */
+    .auth-modal {
+      max-width: 380px !important;
+      padding: 30px 24px;
+    }
+    .auth-view h3 {
+      font-size: 1.5rem;
+      margin-bottom: 8px;
+    }
+    .auth-copy {
+      color: var(--text-secondary);
+      font-size: 0.88rem;
+      line-height: 1.4;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .btn-google {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      min-height: 44px;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+      background: #fff;
+      color: #1f2937;
+      font-weight: 800;
+      font-size: 0.94rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-google:hover {
+      background: #f9fafb;
+      transform: translateY(-1px);
+    }
+    .btn-google:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .btn-login-home {
+      border: 0;
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+    .home-greeting {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 12px;
+      padding: 8px 14px;
+      border: 1px solid rgba(198, 211, 0, 0.22);
+      border-radius: 999px;
+      background: rgba(198, 211, 0, 0.08);
+      color: var(--text-primary);
+      font-size: 0.92rem;
+      font-weight: 700;
+      box-shadow: 0 10px 24px rgba(198, 211, 0, 0.08);
+    }
+    .home-greeting strong {
+      color: var(--accent-tennis);
+      font-weight: 900;
+    }
+    .auth-success {
+      color: #86efac;
+      font-size: 0.82rem;
+      margin-top: 10px;
+      text-align: center;
+    }
+    .mock-login-panel {
+      margin-top: 20px;
+      padding: 16px;
+      border: 1px dashed rgba(251, 191, 36, 0.3);
+      border-radius: 12px;
+      background: rgba(251, 191, 36, 0.05);
+      text-align: left;
+    }
+    .mock-login-panel p {
+      margin: 0 0 12px;
+      color: #fbbf24;
+      font-size: 0.8rem;
+      line-height: 1.4;
+      text-align: center;
+    }
+    .form-group {
+      margin-bottom: 12px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(0,0,0,0.2);
+      color: #fff;
+      font-size: 0.88rem;
+    }
+    .auth-error {
+      color: #fca5a5;
+      font-size: 0.8rem;
+      margin-top: 10px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+<div class="main-container">
+  <header style="position:relative">
+    <!-- User pill top-right -->
+    <div class="user-bar-index" id="userBarIndex"></div>
+
+    <img src="logo_uctenis_v03.png" alt="UCTenis" class="club-logo">
+    <h1>Canchas de Tenis UCT</h1>
+    <div class="date-today" id="dateToday"></div>
+    <div class="home-greeting" id="homeGreeting" style="display:none;"></div>
+  </header>
+
+  <main>
+    <!-- ── TOP PENDING CHALLENGE ALERT ── -->
+    <div id="topChallengeAlert" class="top-challenge-alert" style="display:none;"></div>
+
+    <!-- ── ACTIONS HERO GRID (Reservar Cancha + Ver Ranking) ── -->
+    <div class="actions-hero-grid">
+      <!-- Reservar Cancha Card -->
+      <div class="hero-card">
+        <div>
+          <div class="hero-card-content">
+            <div class="hero-card-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/>
+              </svg>
+            </div>
+            <div>
+              <h2 class="hero-card-title">Reserva de Canchas</h2>
+              <p class="hero-card-desc">Elige complejo (CEC o CJP), selecciona el día y el horario disponible — en segundos.</p>
+            </div>
+          </div>
+        </div>
+        <a href="reservas.html" class="hero-card-btn hero-card-btn-primary">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+          Reservar Cancha
+        </a>
+      </div>
+
+      <!-- Ver Ranking Card -->
+      <div class="hero-card">
+        <div>
+          <div class="hero-card-content">
+            <div class="hero-card-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/>
+              </svg>
+            </div>
+            <div>
+              <h2 class="hero-card-title">Ranking &amp; Desafíos</h2>
+              <p class="hero-card-desc">Consulta la escalerilla oficial, reta a tus rivales e ingresa resultados de partidos.</p>
+            </div>
+          </div>
+        </div>
+        <a href="ranking.html" class="hero-card-btn hero-card-btn-primary">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M5 13h11.59l-5.29 5.29 1.41 1.41L20 12l-7.29-7.29-1.41 1.41L16.59 11H5v2z"/></svg>
+          Ver Ranking
+        </a>
+      </div>
+    </div>
+
+    <!-- ── DASHBOARD LAYOUT (Resultados y Desafíos + Novedades Sidebar) ── -->
+    <div class="dashboard-layout" id="liveSection" style="display:none;">
+      <!-- Main Content (Left Column) -->
+      <div class="dashboard-main">
+        <!-- Desafíos Activos -->
+        <div class="glass-card live-dashboard-card">
+          <h2 class="section-title" style="display:flex; align-items:center; gap:8px; font-size:1.05rem; margin-bottom:12px; border-left: 3px solid #f87171; padding-left: 8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="color:#f87171"><path d="M14.5 2.5c0 1.5-1.5 7-1.5 7h-2C10 9.5 8.5 4 8.5 2.5a3 3 0 0 1 6 0zM12 11c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3zM2 12L.5 13.5l4 4L6 16l-1.5-1.5L6 13 4.5 11.5 2 12zm20 0l-2.5-.5L18 13l1.5 1.5L18 16l1.5 1.5 4-4L22 12z"/></svg>
+            Desafíos Activos
+            <span class="live-badge">
+              <svg width="6" height="6" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="#f87171"/></svg>
+              EN VIVO
+            </span>
+          </h2>
+          <div id="activeChallengesList" class="compact-match-grid">
+            <div class="live-empty">Cargando...</div>
+          </div>
+          <div class="live-footer" style="text-align:right; margin-top:8px;">
+            <a href="ranking.html">Ver todos los desafíos →</a>
+          </div>
+        </div>
+
+        <!-- Últimos Resultados -->
+        <div class="glass-card live-dashboard-card">
+          <h2 class="section-title" style="display:flex; align-items:center; gap:8px; font-size:1.05rem; margin-bottom:12px; border-left: 3px solid #fbbf24; padding-left: 8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="color:#fbbf24"><path d="M12 1l3.09 6.26L22 8.27l-5 4.87 1.18 6.88L12 16.77l-6.18 3.25L7 13.14 2 8.27l6.91-1.01L12 1z"/></svg>
+            Últimos Resultados
+          </h2>
+          <div id="latestResultsList" class="compact-match-grid">
+            <div class="live-empty">Cargando...</div>
+          </div>
+          <div class="live-footer" style="text-align:right; margin-top:8px;">
+            <a href="ranking.html">Ver ranking completo →</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar Content (Right Column) -->
+      <aside class="dashboard-sidebar">
+        <div class="glass-card sidebar-news-card">
+          <h2 class="section-title" style="display:flex; align-items:center; gap:8px; font-size:1.05rem; margin-bottom:16px; border-left: 3px solid var(--accent-tennis); padding-left: 8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="color:var(--accent-tennis)"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-5 14H4v-4h11v4zm0-5H4V9h11v4zm5 5h-4V9h4v9z"/></svg>
+            Novedades del Club
+          </h2>
+          <div class="sidebar-news-list" id="newsGrid">
+            <div class="live-empty">Cargando novedades...</div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <footer>
+    <div class="footer-links">
+      <a href="normas.html" class="btn-pill">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+        Normas de Uso
+      </a>
+      <a href="https://www.instagram.com/uct.tenis" target="_blank" class="btn-pill instagram-link">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+        Instagram
+      </a>
+      <a href="admin-horarios.html" class="btn-pill" id="adminHorariosLink" style="display:none;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/></svg>
+        Admin Horarios
+      </a>
+    </div>
+    <div class="small-note">Al finalizar en arcilla pasa el escobillón, barre las líneas y riega la cancha. ¡Solo una reserva diaria por socio!</div>
+    <div class="brand-legend">
+      <img src="logo_uctenis_v03.png" alt="UCTenis">
+      <span>UCTenis Club · Universidad Católica de Temuco</span>
+    </div>
+  </footer>
+</div>
+
+<div class="modal-overlay" id="homeAuthModal" aria-hidden="true">
+  <div class="modal-content auth-modal">
+    <button class="modal-close-btn" type="button" data-close-home-auth aria-label="Cerrar">x</button>
+    <div id="homeAuthMainView" class="auth-view">
+      <h3>Iniciar sesion</h3>
+      <p class="auth-copy">Entra a tu cuenta UCTenis para ver tu saludo, alertas y desafios pendientes desde el home.</p>
+      <div id="homeGoogleBtnContainer">
+        <button id="btnHomeGoogleLogin" class="btn-google" type="button">
+          <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="#EA4335" d="M12 5.04c1.66 0 3.2.57 4.38 1.69l3.27-3.27C17.68 1.54 14.98 1 12 1 7.35 1 3.37 3.67 1.39 7.56l3.89 3.02C6.21 7.62 8.87 5.04 12 5.04z"/><path fill="#4285F4" d="M23.49 12.27c0-.81-.07-1.59-.2-2.34H12v4.44h6.44c-.28 1.48-1.12 2.73-2.38 3.58l3.69 2.87c2.16-1.99 3.74-4.92 3.74-8.55z"/><path fill="#FBBC05" d="M5.28 14.42c-.22-.66-.35-1.37-.35-2.1s.13-1.44.35-2.1L1.39 7.2C.5 8.98 0 10.94 0 13s.5 4.02 1.39 5.8l3.89-3.02z"/><path fill="#34A853" d="M12 23c3.24 0 5.97-1.07 7.96-2.91l-3.69-2.87c-1.12.75-2.54 1.21-4.27 1.21-3.13 0-5.79-2.58-6.73-5.54L1.39 15.9C3.37 19.8 7.35 23 12 23z"/></svg>
+          Ingresar con Google
+        </button>
+      </div>
+      <div id="homeMockLoginContainer" class="mock-login-panel">
+        <p id="homeMockLoginHint"><strong>Ingreso local</strong><br>Usa tu correo registrado para abrir sesion en esta version local.</p>
+        <div class="form-group">
+          <label for="homeMockEmail">Correo electronico</label>
+          <input type="email" id="homeMockEmail" placeholder="jugador@uct.cl" value="dsilva@uct.cl">
+        </div>
+        <div class="form-group">
+          <label for="homeMockNombre">Nombre</label>
+          <input type="text" id="homeMockNombre" placeholder="Nombre completo" value="David Silva">
+        </div>
+        <button id="btnHomeMockLogin" class="btn-primary" type="button">Iniciar sesion</button>
+      </div>
+      <p class="auth-error" id="homeAuthErr" aria-live="polite"></p>
+      <p class="auth-success" id="homeAuthOk" aria-live="polite"></p>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDK Compat -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+<script src="db.js?v=20260528_v10"></script>
+<script src="script.js?v=20260528_v10"></script>
+<script>
+// Admin emails (must match db.js)
+const ADMIN_EMAILS = ['uctenisclub@gmail.com', 'dsilva@uct.cl'];
+
+function escapeHTML(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function renderNewsGrid(topMoverCard) {
+  const newsGrid = document.getElementById('newsGrid');
+  if (!newsGrid) return;
+  
+  const newsList = [];
+  
+  if (topMoverCard) {
+    newsList.push(topMoverCard);
+  }
+  
+  newsList.push({
+    badgeClass: 'badge-torneo',
+    badgeText: 'Interclub',
+    title: 'Gran Campeonato de Vuelta: Interclub vs Club de Tenis de Funcionarios UFRO',
+    body: 'Este lunes comenzó la serie de vuelta de nuestro tradicional Interclub contra el Club de Tenis de funcionarios de la UFRO (Universidad de la Frontera). Tras haber ganado la primera copa, ¡nuestro equipo de hombres y mujeres lucha para mantener el trofeo en casa! Hasta ahora vamos liderando la serie 3 a 1. ¡Vamos UCTenis!',
+    date: '27 May, 2026'
+  });
+  
+
+  
+  newsList.push({
+    badgeClass: 'badge-maint',
+    badgeText: 'Mantención',
+    title: 'Cuidado de las Canchas de Arcilla',
+    body: 'Recordatorio obligatorio para todos los socios: al terminar tu bloque en arcilla, debes pasar el escobillón, barrer las líneas y regar la cancha para el siguiente turno.',
+    date: '24 May, 2026'
+  });
+
+  newsList.push({
+    badgeClass: 'badge-app',
+    badgeText: 'Plataforma',
+    title: 'Optimización para iPhone y Móviles',
+    body: 'Hemos actualizado la sección de ranking para dispositivos móviles. Ahora verás una barra de navegación fluida que separa la Escalera de tu Ficha personal.',
+    date: '20 May, 2026'
+  });
+  
+  const limitedNews = newsList.slice(0, 3);
+  newsGrid.innerHTML = limitedNews.map(item => `
+    <article class="news-card">
+      <div class="news-badge ${item.badgeClass}">${item.badgeText}</div>
+      <h3 class="news-card-title">${escapeHTML(item.title)}</h3>
+      <p class="news-card-body">${escapeHTML(item.body)}</p>
+      <div class="news-date">${item.date}</div>
+    </article>
+  `).join('');
+}
+window.renderNewsGrid = renderNewsGrid;
+
+
+// User bar
+function firstName(value) {
+  return (value || 'Jugador').trim().split(/\s+/)[0] || 'Jugador';
+}
+
+function renderHomeGreeting(session) {
+  const greeting = document.getElementById('homeGreeting');
+  if (!greeting) return;
+  if (!session) {
+    greeting.style.display = 'none';
+    greeting.innerHTML = '';
+    return;
+  }
+  const name = firstName(session.nombre);
+  greeting.style.display = 'inline-flex';
+  greeting.innerHTML = `Hola, <strong>${escapeHTML(name)}</strong>. Tu sesion UCTenis esta activa.`;
+}
+
+function renderIndexUserBar() {
+  const s = DB.getSession();
+  const bar = document.getElementById('userBarIndex');
+  const adminLink = document.getElementById('adminHorariosLink');
+  if (adminLink) adminLink.style.display = 'none';
+  renderHomeGreeting(s);
+  if (s) {
+    // Show admin link if admin
+    if (adminLink && ADMIN_EMAILS.includes((s.email || '').toLowerCase())) {
+      adminLink.style.display = 'inline-flex';
+    }
+    bar.innerHTML = `<div class="user-pill">
+      <div class="user-avatar-sm">${escapeHTML(firstName(s.nombre).charAt(0))}</div>
+      <span style="font-size:.88rem">${escapeHTML(firstName(s.nombre))}</span>
+      <a href="ranking.html" style="font-size:.82rem;color:var(--accent-tennis);font-weight:600">Mis desafíos</a>
+      <button class="btn-logout-sm" onclick="DB.logout();location.reload()">✕</button>
+    </div>`;
+  } else {
+    bar.innerHTML = `<button type="button" class="btn-pill btn-login-home" data-open-home-auth style="font-size:.85rem;padding:8px 16px"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg> Iniciar sesion</button>`;
+  }
+}
+
+function openHomeAuthModal() {
+  const modal = document.getElementById('homeAuthModal');
+  if (!modal) return;
+  const configured = DB.isFirebaseConfigured();
+  const useLocalLogin = isLocalAuthHost() || !configured;
+  document.getElementById('homeGoogleBtnContainer').style.display = configured && !useLocalLogin ? 'block' : 'none';
+  document.getElementById('homeMockLoginContainer').style.display = useLocalLogin ? 'block' : 'none';
+  document.getElementById('homeMockLoginHint').innerHTML = useLocalLogin
+    ? '<strong>Ingreso local</strong><br>Usa tu correo registrado para abrir sesion en esta version local.'
+    : '<strong>Modo simulacion</strong><br>Disponible si Google Auth no responde en esta sesion.';
+  document.getElementById('homeAuthErr').textContent = '';
+  document.getElementById('homeAuthOk').textContent = '';
+  modal.classList.add('visible');
+  modal.setAttribute('aria-hidden', 'false');
+}
+
+function isLocalAuthHost() {
+  return ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
+}
+
+function showHomeLocalLogin(message) {
+  document.getElementById('homeGoogleBtnContainer').style.display = 'none';
+  document.getElementById('homeMockLoginContainer').style.display = 'block';
+  document.getElementById('homeMockLoginHint').innerHTML = '<strong>Ingreso local</strong><br>Usa tu correo registrado para abrir sesion en esta version local.';
+  document.getElementById('homeAuthErr').textContent = message || '';
+}
+
+function closeHomeAuthModal() {
+  const modal = document.getElementById('homeAuthModal');
+  if (!modal) return;
+  modal.classList.remove('visible');
+  modal.setAttribute('aria-hidden', 'true');
+}
+
+function setHomeAuthBusy(button, label) {
+  if (!button) return function() {};
+  const original = button.innerHTML;
+  button.disabled = true;
+  button.textContent = label;
+  return function restore() {
+    button.disabled = false;
+    button.innerHTML = original;
+  };
+}
+
+async function finishHomeLogin(result) {
+  const error = document.getElementById('homeAuthErr');
+  const ok = document.getElementById('homeAuthOk');
+  if (result.isNew) {
+    error.innerHTML = 'Tu correo esta validado, pero aun falta vincular una ficha de jugador. Abre el ranking para completar el perfil.';
+    ok.textContent = '';
+    return;
+  }
+  closeHomeAuthModal();
+  renderIndexUserBar();
+  ok.textContent = '';
+  setTimeout(() => loadLiveData(), 100);
+}
+
+async function handleHomeGoogleLogin() {
+  const restore = setHomeAuthBusy(document.getElementById('btnHomeGoogleLogin'), 'Iniciando sesion...');
+  document.getElementById('homeAuthErr').textContent = '';
+  document.getElementById('homeAuthOk').textContent = '';
+  try {
+    const result = await DB.loginWithGoogle();
+    if (!result.ok) {
+      if (isLocalAuthHost() || String(result.msg || '').includes('unauthorized-domain')) {
+        showHomeLocalLogin('Google Auth no esta habilitado para este dominio local. Usa el ingreso por correo.');
+      } else {
+        document.getElementById('homeAuthErr').textContent = result.msg;
+      }
+      return;
+    }
+    await finishHomeLogin(result);
+  } finally {
+    restore();
+  }
+}
+
+async function handleHomeMockLogin() {
+  const email = document.getElementById('homeMockEmail').value.trim();
+  const nombre = document.getElementById('homeMockNombre').value.trim();
+  const error = document.getElementById('homeAuthErr');
+  if (!email) {
+    error.textContent = 'Ingresa un correo registrado.';
+    return;
+  }
+  const restore = setHomeAuthBusy(document.getElementById('btnHomeMockLogin'), 'Sincronizando...');
+  error.textContent = '';
+  document.getElementById('homeAuthOk').textContent = '';
+  try {
+    const result = await DB.loginWithGoogleMock(email, nombre);
+    if (!result.ok) {
+      if (!isLocalAuthHost()) {
+        error.textContent = result.msg;
+        return;
+      }
+      const localUser = {
+        id: email.toLowerCase(),
+        nombre: nombre || email.split('@')[0],
+        email: email,
+        genero: 'M',
+        categoria: 'Principiante',
+        mano: 'Derecha',
+        reves: 'Dos manos',
+        foto: '',
+        telefono: ''
+      };
+      DB.upsertUserLocal(localUser);
+      localStorage.setItem('uctenis_session', JSON.stringify(localUser));
+      await finishHomeLogin({ ok: true, user: localUser, isNew: false });
+      return;
+    }
+    await finishHomeLogin(result);
+  } finally {
+    restore();
+  }
+}
+
+// ── Live Challenges & Results from Firebase/localStorage ──
+function formatDateShort(iso) {
+  if (!iso || typeof iso !== 'string') return '';
+  // Accept YYYY-MM-DD or YYYY-MM-DDTHH:mm... format
+  const datePart = iso.split('T')[0];
+  const parts = datePart.split('-');
+  if (parts.length < 3) return '';
+  const y = parseInt(parts[0], 10);
+  const m = parseInt(parts[1], 10);
+  const d = parseInt(parts[2], 10);
+  if (!Number.isFinite(d) || !Number.isFinite(m) || m < 1 || m > 12 || d < 1 || d > 31) return '';
+  const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  return `${d} ${months[m-1]}`;
+}
+
+function homeHasRecordedResult(challenge) {
+  return Boolean(
+    String(challenge?.marcador || '').trim() ||
+    String(challenge?.ganadorId || '').trim()
+  );
+}
+
+function homeNormalizeChallenge(challenge) {
+  const normalized = { ...(challenge || {}) };
+  if (homeHasRecordedResult(normalized) && normalized.status !== 'eliminado') {
+    normalized.status = 'completado';
+  }
+  return normalized;
+}
+
+function homeChallengeTime(challenge) {
+  const raw = challenge?.actualizado || challenge?.updatedAt || challenge?.creado || challenge?.fecha || '';
+  const time = raw ? new Date(raw).getTime() : NaN;
+  return Number.isFinite(time) ? time : 0;
+}
+
+function homeMergeChallengeRecords(current, incoming) {
+  const base = homeNormalizeChallenge(current || {});
+  const next = homeNormalizeChallenge(incoming || {});
+  const newer = homeChallengeTime(next) >= homeChallengeTime(base) ? next : base;
+  const older = newer === next ? base : next;
+  const merged = { ...older };
+
+  Object.entries(newer).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      merged[key] = value;
+    } else if (!(key in merged)) {
+      merged[key] = value;
+    }
+  });
+
+  if (homeHasRecordedResult(base) || homeHasRecordedResult(next)) {
+    const completed = homeHasRecordedResult(next) ? next : base;
+    merged.status = 'completado';
+    merged.marcador = completed.marcador || merged.marcador;
+    merged.ganadorId = completed.ganadorId || merged.ganadorId;
+    merged.actualizado = completed.actualizado || merged.actualizado || new Date().toISOString();
+  }
+
+  return homeNormalizeChallenge(merged);
+}
+
+function homeMergeChallengeSources(sources) {
+  const byId = new Map();
+  sources.flat().filter(Boolean).forEach(challenge => {
+    const normalized = homeNormalizeChallenge(challenge);
+    const key = normalized.id || `${normalized.retadorId || normalized.retadorNombre}-${normalized.retadoId || normalized.retadoNombre}-${normalized.fecha || normalized.creado}`;
+    byId.set(key, homeMergeChallengeRecords(byId.get(key), normalized));
+  });
+  return Array.from(byId.values());
+}
+
+async function loadLiveData() {
+  let challenges = [];
+  const sources = [];
+  
+  // Try Firebase first
+  if (DB.isCloudConfigured()) {
+    try {
+      sources.push(await DB.getChallengesCloud());
+    } catch(e) {
+      console.warn("Firebase offline para desafíos, intentando Google Sheets...", e);
+    }
+  }
+
+  // Note: Google Sheets source removed — Firebase is the single source of truth.
+
+  if (sources.length) {
+    challenges = homeMergeChallengeSources(sources);
+    DB.saveChallenges(challenges); // sync to local
+    challenges = DB.getChallenges(); // reload to get filtered list
+  } else {
+    challenges = DB.getChallenges();
+  }
+
+  if (!challenges.length) return; // Don't show section if no data
+
+  document.getElementById('liveSection').style.display = 'grid';
+
+  // Fetch all players to get their photos and details
+  let playersMap = {};
+  let topMoverCard = null;
+  if (DB.isCloudConfigured()) {
+    try {
+      const players = await DB.getPlayersCloud();
+      players.forEach(p => {
+        if (p.nombre) playersMap[p.nombre.toLowerCase().trim()] = p;
+        if (p.id) playersMap[p.id.toLowerCase().trim()] = p;
+      });
+
+      // Calculate player with the highest rank increase (prev > pos)
+      let bestMover = null;
+      let maxDiff = 0;
+      players.forEach(p => {
+        const pos = Number(p.posicion ?? p.pos ?? 0);
+        const prev = Number(p.posicionAnterior ?? p.prev ?? 0);
+        if (pos > 0 && prev > 0 && prev > pos) {
+          const diff = prev - pos;
+          if (diff > maxDiff) {
+            maxDiff = diff;
+            bestMover = { ...p, diff };
+          }
+        }
+      });
+
+      if (bestMover) {
+        const currentPos = Number(bestMover.posicion ?? bestMover.pos ?? 0);
+        topMoverCard = {
+          badgeClass: 'badge-torneo',
+          badgeText: 'Destacado',
+          title: `¡Evolución del Ranking: Felicitaciones a ${bestMover.nombre}!`,
+          body: `Saludamos a ${bestMover.nombre} por ser el jugador con mayor ascenso en el ranking recientemente, subiendo un total de ${bestMover.diff} puestos para posicionarse en el lugar #${currentPos || '?'} de la escalerilla oficial del club. ¡Excelente juego!`,
+          date: new Date().toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' })
+        };
+      }
+    } catch(e) {
+      console.warn("Error resolving top mover:", e);
+    }
+  }
+
+  // No fallback card — only show real data from Firebase
+
+  // Render the news section dynamically
+  renderNewsGrid(topMoverCard);
+
+  // Resolve session challenge IDs
+  const session = DB.getSession();
+  const sessionIds = [];
+  if (session) {
+    if (session.id) sessionIds.push(session.id);
+    const emailLower = (session.email || '').toLowerCase().trim();
+    const nameLower = (session.nombre || '').toLowerCase().trim();
+    if (playersMap[emailLower] && playersMap[emailLower].id) sessionIds.push(playersMap[emailLower].id);
+    if (playersMap[nameLower] && playersMap[nameLower].id) sessionIds.push(playersMap[nameLower].id);
+  }
+
+  const isMyChallenge = (c) => {
+    if (!session) return false;
+    const emailLower = (session.email || '').toLowerCase().trim();
+
+    // 1. ID match (más confiable)
+    if (c.retadorId && sessionIds.includes(c.retadorId)) return true;
+    if (c.retadoId && sessionIds.includes(c.retadoId)) return true;
+
+    // 2. Email match (solo si ambos tienen email)
+    if (emailLower) {
+      if (c.retadorEmail && c.retadorEmail.toLowerCase().trim() === emailLower) return true;
+      if (c.retadoEmail && c.retadoEmail.toLowerCase().trim() === emailLower) return true;
+    }
+
+    // 3. Nombre solo si el desafío NO tiene ID ni email (registros muy viejos)
+    if (!c.retadorId && !c.retadorEmail && !c.retadoId && !c.retadoEmail) {
+      const nameLower = (session.nombre || '').toLowerCase().trim();
+      if (nameLower && c.retadorNombre && c.retadorNombre.toLowerCase().trim() === nameLower) return true;
+      if (nameLower && c.retadoNombre && c.retadoNombre.toLowerCase().trim() === nameLower) return true;
+    }
+
+    return false;
+  };
+
+  // Resolve player photo based on Firestore or static fallbacks
+  function getPlayerPhoto(playerName) {
+    const nameKey = (playerName || '').toLowerCase().trim();
+    if (playersMap[nameKey]) {
+      const p = playersMap[nameKey];
+      if (p.foto && p.foto.trim() !== '') return p.foto;
+      const g = String(p.genero || p.gender || '').toUpperCase();
+      if (g === 'F' || g === 'FEMENINO' || g === 'MUJER' || g === 'MUJERES') {
+        return 'fotos/default_avatar_m.png';
+      }
+      return 'fotos/default_avatar_h.png';
+    }
+    
+    // Known female players
+    const femaleNames = ['carolina cardenas', 'carolina cárdenas', 'angelica encina', 'angélica encina', 'maria jose', 'maria josé', 'valeria schatter', 'violeta moreno'];
+    if (femaleNames.includes(nameKey)) {
+      return 'fotos/default_avatar_m.png';
+    }
+    
+    // Static files list mapping
+    const staticAvatars = {
+      'david silva': 'fotos/m001.png',
+      'ismael devia': 'fotos/m002.png',
+      'miguel escalona': 'fotos/m005.png',
+      'luis otth': 'fotos/m004.png',
+      'gustavo curaqueo': 'fotos/m009.png',
+      'jaime castillo': 'fotos/m011.png',
+      'matías cáceres': 'fotos/m007.png',
+      'matias caceres': 'fotos/m007.png',
+      'rodrigo castro': 'fotos/m006.png',
+      'klaus hennicke': 'fotos/m017.png',
+      'josé melgarejo': 'fotos/m016.png',
+      'jose melgarejo': 'fotos/m016.png',
+      'juan maripillan': 'fotos/m008.png',
+      'juan maripillán': 'fotos/m008.png',
+      'cristian rebolledo': 'fotos/m010.png',
+      'francisco encina': 'fotos/m003.png',
+      'cristian farias': 'fotos/m012.png',
+      'miguel angulo': 'fotos/m015.png',
+      'roberto bermudez': 'fotos/m018.png',
+      'roberto bermúdez': 'fotos/m018.png',
+      'violeta moreno': 'fotos/f004.png',
+      'carolina cárdenas': 'fotos/f001.png',
+      'carolina cardenas': 'fotos/f001.png',
+      'angela encina': 'fotos/f002.png',
+      'angelica encina': 'fotos/f002.png',
+      'maria jose': 'fotos/f003.png',
+      'valeria schatter': 'fotos/f005.png'
+    };
+    if (staticAvatars[nameKey]) return staticAvatars[nameKey];
+    return 'fotos/default_avatar_h.png';
+  }
+
+  // Active challenges (pendiente or aceptado)
+  const active = challenges
+    .filter(c => c.status === 'pendiente' || c.status === 'aceptado')
+    .sort((a, b) => {
+      const myA = isMyChallenge(a) ? 1 : 0;
+      const myB = isMyChallenge(b) ? 1 : 0;
+      if (myA !== myB) return myB - myA; // My challenges first
+      return (b.creado || '').localeCompare(a.creado || '');
+    })
+    .slice(0, 4);
+
+  // Latest results (completado)
+  const results = challenges
+    .filter(c => c.status === 'completado' && c.ganadorId)
+    .sort((a, b) => {
+      const myA = isMyChallenge(a) ? 1 : 0;
+      const myB = isMyChallenge(b) ? 1 : 0;
+      if (myA !== myB) return myB - myA; // My results first
+      return (b.actualizado || b.creado || '').localeCompare(a.actualizado || a.creado || '');
+    })
+    .slice(0, 3);
+
+  // Render active challenges
+  const activeEl = document.getElementById('activeChallengesList');
+  const activeCard = activeEl ? activeEl.closest('.live-dashboard-card') : null;
+  if (activeEl) activeEl.classList.toggle('is-empty', !active.length);
+  if (activeCard) activeCard.classList.toggle('is-empty-compact', !active.length);
+  if (active.length) {
+    activeEl.innerHTML = active.map(c => {
+      const statusClass = c.status === 'aceptado' ? 'status-aceptado' : 'status-pendiente';
+      const statusText = c.status === 'aceptado' ? 'Aceptado' : 'Pendiente';
+      const retadorName = c.retadorNombre || 'Jugador';
+      const retadoName = c.retadoNombre || 'Jugador';
+      
+      const photoRetador = getPlayerPhoto(retadorName);
+      const photoRetado = getPlayerPhoto(retadoName);
+      
+      const courtStr = (c.courtLabel || c.cancha || '').trim() || 'Cancha';
+      const dateStr = formatDateShort(c.fecha) || '';
+      if (!c.retadorId && !c.retadorNombre && !c.retadoId && !c.retadoNombre) return ''; // skip corrupt records
+      
+      const isMyChallengeActive = isMyChallenge(c);
+      const myMatchLabel = isMyChallengeActive ? `<div class="my-match-label">Tu Desafío</div>` : '';
+      const isFriendly = c.tipo === 'amistoso';
+      const typeClass = isFriendly ? 'is-friendly' : 'is-challenge-official';
+      const cardClass = `match-card ${typeClass} ${isMyChallengeActive ? 'is-my-match' : ''}`;
+      
+      return `<div class="${cardClass}">
+        ${myMatchLabel}
+        <div class="match-header">
+          <span class="match-court">${courtStr}</span>
+          <span class="match-type-badge ${isFriendly ? 'is-friendly' : 'is-official'}">${isFriendly ? '🤝 Amistoso' : '⚔️ Desafío'}</span>
+          <span class="match-date">${dateStr}</span>
+        </div>
+        <div class="match-players-row">
+          <div class="match-player-block">
+            <img src="${photoRetador}" class="match-player-avatar" alt="${retadorName}" onerror="this.src='fotos/default_avatar_h.png'">
+            <span class="match-player-name">${retadorName.split(' ').slice(0,2).join(' ')}</span>
+          </div>
+          <div class="match-middle">
+            <span class="match-vs-badge ${statusClass}">${statusText}</span>
+          </div>
+          <div class="match-player-block">
+            <img src="${photoRetado}" class="match-player-avatar" alt="${retadoName}" onerror="this.src='fotos/default_avatar_h.png'">
+            <span class="match-player-name">${retadoName.split(' ').slice(0,2).join(' ')}</span>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  } else {
+    activeEl.innerHTML = '<div class="live-empty"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="opacity:.45"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg><span>No hay desafíos activos</span></div>';
+  }
+
+  // Render latest results
+  const resultsEl = document.getElementById('latestResultsList');
+  if (results.length) {
+    resultsEl.innerHTML = results.map(c => {
+      const winnerName = c.ganadorId === c.retadorId ? (c.retadorNombre || 'Jugador') : (c.retadoNombre || 'Jugador');
+      const loserName  = c.ganadorId === c.retadorId ? (c.retadoNombre || 'Jugador') : (c.retadorNombre || 'Jugador');
+      
+      const photoWinner = getPlayerPhoto(winnerName);
+      const photoLoser = getPlayerPhoto(loserName);
+      
+      const courtStr = (c.courtLabel || c.cancha || '').trim() || 'Cancha';
+      const dateStr = formatDateShort(c.fecha) || '';
+      const scoreStr = c.marcador || 'v/d';
+      if (!c.retadorId && !c.retadorNombre && !c.retadoId && !c.retadoNombre) return ''; // skip corrupt records
+      
+      // Comments rendering (chat bubbles only, no emojis inside comments)
+      let commentsHtml = '';
+      if (c.retadorComentario || c.retadoComentario) {
+        commentsHtml = `<div class="match-comments-chat">`;
+        if (c.retadorComentario) {
+          const author = (c.retadorNombre || 'Retador').split(' ')[0];
+          commentsHtml += `
+            <div class="chat-bubble retador">
+              <span class="chat-author">${escapeHTML(author)}</span>
+              <span>"${escapeHTML(c.retadorComentario)}"</span>
+            </div>`;
+        }
+        if (c.retadoComentario) {
+          const author = (c.retadoNombre || 'Retado').split(' ')[0];
+          commentsHtml += `
+            <div class="chat-bubble retado">
+              <span class="chat-author">${escapeHTML(author)}</span>
+              <span>"${escapeHTML(c.retadoComentario)}"</span>
+            </div>`;
+        }
+        commentsHtml += `</div>`;
+      }
+      
+      const isMyChallengeResult = isMyChallenge(c);
+      const myMatchLabel = isMyChallengeResult ? `<div class="my-match-label">Tu Desafío</div>` : '';
+      const isFriendly = c.tipo === 'amistoso';
+      const typeClass = isFriendly ? 'is-friendly' : 'is-challenge-official';
+      const cardClass = `match-card ${typeClass} ${isMyChallengeResult ? 'is-my-match' : ''}`;
+      
+      return `<div class="${cardClass}">
+        ${myMatchLabel}
+        <div class="match-header">
+          <span class="match-court">${courtStr}</span>
+          <span class="match-type-badge ${isFriendly ? 'is-friendly' : 'is-official'}">${isFriendly ? '🤝 Amistoso' : '⚔️ Desafío'}</span>
+          <span class="match-date">${dateStr}</span>
+        </div>
+        <div class="match-players-row">
+          <div class="match-player-block is-winner">
+            <img src="${photoWinner}" class="match-player-avatar" alt="${winnerName}" onerror="this.src='fotos/default_avatar_h.png'">
+            <span class="match-player-name">🏆 ${winnerName.split(' ').slice(0,2).join(' ')}</span>
+          </div>
+          <div class="match-middle">
+            <span class="match-score-badge">${scoreStr}</span>
+          </div>
+          <div class="match-player-block is-loser">
+            <img src="${photoLoser}" class="match-player-avatar" alt="${loserName}" onerror="this.src='fotos/default_avatar_h.png'">
+            <span class="match-player-name">${loserName.split(' ').slice(0,2).join(' ')}</span>
+          </div>
+        </div>
+        ${commentsHtml}
+      </div>`;
+    }).join('');
+  } else {
+    resultsEl.innerHTML = '<div class="live-empty"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="opacity:.4;margin-bottom:8px"><path d="M12 1l3.09 6.26L22 8.27l-5 4.87 1.18 6.88L12 16.77l-6.18 3.25L7 13.14 2 8.27l6.91-1.01L12 1z"/></svg><br>Aún no hay resultados</div>';
+  }
+
+  // Check for pending challenges alert (floating and top banner)
+  checkPendingChallengesAlert(challenges);
+  highlightPendingChallengesHome(challenges);
+}
+
+function highlightPendingChallengesHome(challenges) {
+  const session = DB.getSession();
+  const alertContainer = document.getElementById('topChallengeAlert');
+  if (!alertContainer) return;
+
+  if (!session || !challenges || !challenges.length) {
+    alertContainer.style.display = 'none';
+    return;
+  }
+
+  const emailLower = (session.email || '').toLowerCase().trim();
+  const nameLower = (session.nombre || '').toLowerCase().trim();
+
+  const pending = challenges.filter(c => {
+    if (c.status !== 'pendiente') return false;
+    const isRetado = (c.retadoId && c.retadoId === session.id) ||
+                     (c.retadoEmail && c.retadoEmail.toLowerCase().trim() === emailLower) ||
+                     (c.retadoNombre && c.retadoNombre.toLowerCase().trim() === nameLower);
+    return isRetado;
+  });
+
+  if (pending.length > 0) {
+    alertContainer.style.display = 'block';
+    alertContainer.innerHTML = `
+      <div class="top-challenge-banner" style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0.05) 100%); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 20px; padding: 18px 24px; margin-bottom: 30px; display: flex; align-items: center; justify-content: space-between; gap: 20px; box-shadow: 0 8px 32px rgba(239,68,68,0.15); animation: pulseAlert 2.5s infinite alternate;">
+        <div style="display:flex; align-items:center; gap:16px;">
+          <span style="font-size:2.2rem; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3));">⚔️</span>
+          <div>
+            <strong style="font-size:1.15rem; color:#fca5a5; display:block; margin-bottom:4px;">¡Tienes un desafío pendiente!</strong>
+            <p style="font-size:0.9rem; color:var(--text-primary); margin:0;">Tienes ${pending.length} reto${pending.length > 1 ? 's' : ''} en el ranking esperando tu respuesta en el panel.</p>
+          </div>
+        </div>
+        <a href="ranking.html" style="background:var(--accent-tennis); color:#0f172a; font-weight:800; font-size:0.92rem; padding:12px 24px; border-radius:50px; text-decoration:none; white-space:nowrap; transition:all 0.3s; box-shadow:0 4px 15px rgba(198,211,0,0.35);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(198,211,0,0.5)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(198,211,0,0.35)';">Ver Desafíos</a>
+      </div>
+      <style>
+        @keyframes pulseAlert {
+          0% { border-color: rgba(239,68,68,0.4); box-shadow: 0 8px 32px rgba(239,68,68,0.15); }
+          100% { border-color: rgba(239,68,68,0.75); box-shadow: 0 8px 32px rgba(239,68,68,0.3); }
+        }
+      </style>
+    `;
+  } else {
+    alertContainer.style.display = 'none';
+  }
+}
+
+function checkPendingChallengesAlert(challenges) {
+  const session = DB.getSession();
+  if (!session) return;
+
+  if (sessionStorage.getItem('challenge_alert_shown') === 'true') return;
+
+  if (!challenges || !challenges.length) return;
+
+  const emailLower = (session.email || '').toLowerCase().trim();
+  const nameLower = (session.nombre || '').toLowerCase().trim();
+
+  // Find if they have a pending challenge as retado
+  const pending = challenges.filter(c => {
+    if (c.status !== 'pendiente') return false;
+    const isRetado = (c.retadoId && c.retadoId === session.id) ||
+                     (c.retadoEmail && c.retadoEmail.toLowerCase().trim() === emailLower) ||
+                     (c.retadoNombre && c.retadoNombre.toLowerCase().trim() === nameLower);
+    return isRetado;
+  });
+
+  if (pending.length > 0) {
+    showFloatingAlert(pending.length);
+  }
+}
+
+function showFloatingAlert(count) {
+  const alertDiv = document.createElement('div');
+  alertDiv.id = 'floating-challenge-alert';
+  alertDiv.style.position = 'fixed';
+  alertDiv.style.bottom = '24px';
+  alertDiv.style.right = '24px';
+  alertDiv.style.backgroundColor = 'rgba(15, 23, 42, 0.95)';
+  alertDiv.style.border = '2px solid var(--accent-tennis)';
+  alertDiv.style.borderRadius = '16px';
+  alertDiv.style.padding = '16px 20px';
+  alertDiv.style.boxShadow = '0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 15px rgba(198, 211, 0, 0.2)';
+  alertDiv.style.zIndex = '9999';
+  alertDiv.style.maxWidth = '320px';
+  alertDiv.style.display = 'flex';
+  alertDiv.style.flexDirection = 'column';
+  alertDiv.style.gap = '12px';
+  alertDiv.style.backdropFilter = 'blur(10px)';
+  alertDiv.style.animation = 'slideInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
+
+  alertDiv.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+      <span style="font-size:1.1rem; font-weight:800; color:var(--accent-tennis);">⚔️ ¡Tienes un desafío!</span>
+      <button onclick="closeFloatingAlert()" style="background:none; border:none; color:var(--text-secondary); cursor:pointer; font-size:1.1rem; padding:0 4px;">✕</button>
+    </div>
+    <p style="font-size:0.85rem; color:var(--text-primary); margin:0;">Tienes <strong>${count}</strong> desafío${count > 1 ? 's' : ''} pendiente${count > 1 ? 's' : ''} por responder.</p>
+    <a href="ranking.html" onclick="closeFloatingAlert()" style="display:block; text-align:center; background:var(--accent-tennis); color:#000; font-weight:900; font-size:0.8rem; padding:8px 12px; border-radius:8px; text-decoration:none; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">Responder en Ranking</a>
+  `;
+
+  if (!document.getElementById('floating-alert-styles')) {
+    const style = document.createElement('style');
+    style.id = 'floating-alert-styles';
+    style.innerHTML = `
+      @keyframes slideInUp {
+        from { transform: translateY(100px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  document.body.appendChild(alertDiv);
+  sessionStorage.setItem('challenge_alert_shown', 'true');
+}
+
+function closeFloatingAlert() {
+  const alertEl = document.getElementById('floating-challenge-alert');
+  if (alertEl) {
+    alertEl.style.transition = 'all 0.3s ease';
+    alertEl.style.opacity = '0';
+    alertEl.style.transform = 'translateY(20px)';
+    setTimeout(() => alertEl.remove(), 300);
+  }
+}
+window.closeFloatingAlert = closeFloatingAlert;
+
+document.addEventListener('DOMContentLoaded', () => {
+  DB.seed();
+  renderIndexUserBar();
+  const btnHomeGoogle = document.getElementById('btnHomeGoogleLogin');
+  const btnHomeMock = document.getElementById('btnHomeMockLogin');
+  if (btnHomeGoogle) btnHomeGoogle.addEventListener('click', handleHomeGoogleLogin);
+  if (btnHomeMock) btnHomeMock.addEventListener('click', handleHomeMockLogin);
+  document.addEventListener('click', event => {
+    if (event.target.closest('[data-open-home-auth]')) openHomeAuthModal();
+    if (event.target.closest('[data-close-home-auth]')) closeHomeAuthModal();
+    if (event.target.id === 'homeAuthModal') closeHomeAuthModal();
+  });
+  // Load live challenges after a short delay to allow Firebase to initialize
+  setTimeout(() => loadLiveData(), 800);
+});
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      reg.update().catch(()=>{});
+    }).catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
